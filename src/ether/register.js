@@ -6,7 +6,8 @@ const keccak256 = require('keccak256')
 const BN = Web3.utils.toBN;
 
 export function register(knowledge) {
-    const privKnowledgeKey = '0x' + keccak256(knowledge).toString('hex');
+    const knowledgeLowcase = knowledge.toLowerCase();
+    const privKnowledgeKey = '0x' + keccak256(knowledgeLowcase).toString('hex');
     const a = BN(privKnowledgeKey);
     const PK = ec.g.mul(a);
     const PKx = '0x' + PK.getX().toString(16);
