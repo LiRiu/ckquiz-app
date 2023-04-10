@@ -49,7 +49,7 @@ export default function Multistep() {
 
   function handleWeb3Click() {
     sdk.getContract(
-      "0xD3afe038E3C318987A98143cf44CFCaFFD750c2B", // The address of your smart contract
+      "0x5B74e4546296ED6e085a8dc908ee02D952ad0b28", // The address of your smart contract
       abi, // The ABI of your smart contract
     ).then((contract) => {
       setIsSending(true);
