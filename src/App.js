@@ -22,7 +22,10 @@ import { ethers } from 'ethers';
 
 const signer = new ethers.providers.Web3Provider(window.ethereum).getSigner()
 const sdk = ThirdwebSDK.fromSigner(signer);
+const quiz_contract_address = "0x5B74e4546296ED6e085a8dc908ee02D952ad0b28";
 const abi = require('./ether/abi.json');
+const erc20abi = require('./ether/erc20.json');
+const { itemDes, itemAddress } = require('./ether/items');
 export const ethereum = window.ethereum;
 
 
@@ -38,6 +41,8 @@ export default function Multistep() {
   const [executeLog, setExecuteLog] = useState('Create');
   const [connected, setConnected] = useState(false);
   const [backLog, setBackLog] = useState('Back');
+
+  const rewardList = getRewardsOption();
   function handleConnectClick(){
     ethereum
       .enable()
@@ -48,29 +53,92 @@ export default function Multistep() {
   handleConnectClick()
 
   function handleWeb3Click() {
+    const rewardType = document.getElementById("reward-type").value;
+    if(rewardType === "0"){
+      handleCreateClick();
+    }else{
+      handleApproveClick(rewardType);
+    }
+  }
+
+  function handleApproveClick(rewardType) {
+    rewardType = Number(rewardType)
+    const address = itemAddress[rewardType];
     sdk.getContract(
-      "0x5B74e4546296ED6e085a8dc908ee02D952ad0b28", // The address of your smart contract
-      abi, // The ABI of your smart contract
+      address, // The address of your smart contract
+      erc20abi, // The ABI of your smart contract
     ).then((contract) => {
       setIsSending(true);
-      const [PKx, PKy] = register(answer);
-      contract.call("register", [PKx, PKy],{value: ethers.utils.parseEther("10")}).then((result) => {
-        const receipt = result;
-        const _quizId = Number(receipt.receipt.logs[0].data);
-        setQuizId(_quizId);
-        setIsSend(true);
+      const totalPrizeAmount = document.getElementById("reward-total-amount").value;
+      const totalPrizeAmountWei = ethers.utils.parseEther(totalPrizeAmount);
+      contract.call("approve", [quiz_contract_address, totalPrizeAmountWei],).then((result) => {
+          const receipt = result;
+          console.log(receipt);
+          setIsSending(false);
+          setExecuteLog('Make');
+          toast({
+            title: "Token Approve Success",
+            description: "TxHash: " + receipt.receipt.transactionHash,
+            status: "success",
+            duration: 8000,
+            isClosable: true,
+          })
+          handleCreateClick(rewardType);
+      }).catch((error) => {
+        console.log(error);
         setIsSending(false);
-        setExecuteLog('Done');
         toast({
-          title: "Quiz Created Success",
-          description: "TxHash: " + receipt.receipt.transactionHash,
-          status: "success",
+          title: "Token Approve Failed",
+          description: "Maybe Not Enough Token...",
+          status: "error",
           duration: 8000,
           isClosable: true,
         })
       });
     }).catch((error) => {
       console.log(error);
+    });
+  }
+
+  function handleCreateClick(rewardId = '0') {
+    sdk.getContract(
+      quiz_contract_address, // The address of your smart contract
+      abi, // The ABI of your smart contract
+    ).then((contract) => {
+      setIsSending(true);
+      const [PKx, PKy] = register(answer);
+      const prizePerWinner = document.getElementById("reward-per-amount").value;
+      const prizePerWinnerWei = ethers.utils.parseEther(prizePerWinner);
+      const totalPrizeAmount = document.getElementById("reward-total-amount").value;
+      const totalPrizeAmountWei = ethers.utils.parseEther(totalPrizeAmount);
+      const totalValueWei = rewardId === 0 ? totalPrizeAmountWei : 0;
+      const logIndex = rewardId === 0 ? 0 : 2;
+      contract.call("register", [PKx, PKy, rewardId, prizePerWinnerWei, totalPrizeAmountWei],
+        {value: totalValueWei}).then((result) => {
+          const receipt = result;
+          const _quizId = Number(receipt.receipt.logs[logIndex].data);
+          setQuizId(_quizId);
+          setIsSend(true);
+          setIsSending(false);
+          setExecuteLog('Done');
+          toast({
+            title: "Quiz Created Success",
+            description: "TxHash: " + receipt.receipt.transactionHash,
+            status: "success",
+            duration: 8000,
+            isClosable: true,
+          })
+      });
+    }).catch((error) => {
+      console.log(error);
+    });
+  }
+
+  function getRewardsOption(){
+    return itemDes.map((value, index) => {
+        return (
+            <option key={index} value={index}>{value}</option>
+        )
     });
   }
 
@@ -90,14 +158,14 @@ export default function Multistep() {
             <FormLabel fontWeight={'normal'}>
               Quiz Text
             </FormLabel>
-            <Input onChange={handleTextOnChange} id="quiz-text" placeholder="What ZKP Scheme is CKQuiz used?"/>
+            <Input isRequired={true} onChange={handleTextOnChange} id="quiz-text" placeholder="What ZKP Scheme is CKQuiz used" defaultValue={"What ZKP Scheme is CKQuiz used"}/>
           </FormControl>
         </Flex>
         <FormControl mt="2%" isRequired>
           <FormLabel htmlFor="quiz-answer" fontWeight={'normal'}>
             Quiz Answer
           </FormLabel>
-          <Input onChange={handleAnswerOnChange} id="quiz-answer" placeholder="Schnorr"/>
+          <Input isRequired={true} onChange={handleAnswerOnChange} id="quiz-answer" placeholder="Schnorr" defaultValue={"Schnorr"}/>
           <FormHelperText>We recommend a one-word answer that case-insensitive.</FormHelperText>
         </FormControl>
       </>
@@ -124,19 +192,15 @@ export default function Multistep() {
           <Select
             id="reward-type"
             name="reward-type"
-            autoComplete="reward-type"
-            defaultValue={'CKB (Godwoken testnet)'}
             focusBorderColor="brand.400"
             shadow="sm"
             size="sm"
             w="full"
-            rounded="md">
-            <option>CKB (Godwoken testnet)</option>
-            <option disabled>CKB (Godwoken mainnet)</option>
-            <option disabled>Token (Godwoken testnet)</option>
-            <option disabled>Token (Godwoken mainnet)</option>
-            <option disabled>NFT (Godwoken testnet)</option>
-            <option disabled>NFT (Godwoken mainnet)</option>
+            rounded="md"
+            defaultValue={'0'}
+            // onChange={handleOptionChange}
+            >
+            {rewardList}
           </Select>
         </FormControl>
 
@@ -163,7 +227,7 @@ export default function Multistep() {
             w="full"
             rounded="md"
             placeholder='10'
-            disabled
+            defaultValue={10}
           />
         </FormControl>
 
@@ -190,7 +254,7 @@ export default function Multistep() {
             w="full"
             rounded="md"
             placeholder='1'
-            disabled
+            defaultValue={1}
           />
         </FormControl>
       </>
