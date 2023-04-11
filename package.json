@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@chakra-ui/icons": "^2.0.18",
     "@chakra-ui/react": "^2.5.5",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -10,6 +11,7 @@
     "@thirdweb-dev/react": "^3.11.7",
     "@thirdweb-dev/sdk": "^3.10.10",
     "browserify-zlib": "^0.2.0",
+    "copy-to-clipboard": "^3.3.3",
     "ethereumjs-tx": "^2.1.2",
     "ethers": "^5.7.2",
     "keccak256": "^1.0.6",

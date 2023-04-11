@@ -11,14 +11,17 @@ import {
   GridItem,
   FormLabel,
   Input,
+  IconButton,
   Select,
   SimpleGrid,
   InputGroup,
   FormHelperText,
+  useToast
 } from '@chakra-ui/react';
-import { useToast } from '@chakra-ui/react';
+import { CopyIcon } from "@chakra-ui/icons";
 import { register } from './ether/register';
 import { ethers } from 'ethers';
+import copy from "copy-to-clipboard";
 
 const signer = new ethers.providers.Web3Provider(window.ethereum).getSigner()
 const sdk = ThirdwebSDK.fromSigner(signer);
@@ -41,6 +44,8 @@ export default function Multistep() {
   const [executeLog, setExecuteLog] = useState('Create');
   const [connected, setConnected] = useState(false);
   const [backLog, setBackLog] = useState('Back');
+  const notion_url = "https://ckquiz-challenge.vercel.app/?id=" + quizId + "&text=" + text;
+  const mirror_url = notion_url + "&height=36&width=345&display=iframe";
 
   const rewardList = getRewardsOption();
   function handleConnectClick(){
@@ -53,16 +58,16 @@ export default function Multistep() {
   handleConnectClick()
 
   function handleWeb3Click() {
-    const rewardType = document.getElementById("reward-type").value;
-    if(rewardType === "0"){
-      handleCreateClick();
+    const rewardTypeStr = document.getElementById("reward-type").value;
+    const rewardType = Number(rewardTypeStr)
+    if(rewardType === 0){
+      handleCreateClick(rewardType);
     }else{
       handleApproveClick(rewardType);
     }
   }
 
   function handleApproveClick(rewardType) {
-    rewardType = Number(rewardType)
     const address = itemAddress[rewardType];
     sdk.getContract(
       address, // The address of your smart contract
@@ -100,7 +105,7 @@ export default function Multistep() {
     });
   }
 
-  function handleCreateClick(rewardId = '0') {
+  function handleCreateClick(rewardId) {
     sdk.getContract(
       quiz_contract_address, // The address of your smart contract
       abi, // The ABI of your smart contract
@@ -140,6 +145,30 @@ export default function Multistep() {
             <option key={index} value={index}>{value}</option>
         )
     });
+  }
+
+  function handleCopyNotion(){
+    if(copy(notion_url)){
+      toast({
+        title: "Copied to Clipboard",
+        description: "Paste it into your page",
+        status: "success",
+        duration: 8000,
+        isClosable: true,
+      })
+    }
+  }
+
+  function handleCopyMirror(){
+    if(copy(mirror_url)){
+      toast({
+        title: "Copied to Clipboard",
+        description: "Paste it into your page",
+        status: "success",
+        duration: 8000,
+        isClosable: true,
+      })
+    }
   }
 
   const Form1 = () => {
@@ -262,7 +291,6 @@ export default function Multistep() {
   };
 
   const Form3 = () => {
-    const notion_url = "https://ckquiz-challenge.vercel.app/?id=" + quizId + "&text=" + text;
     return (
       <>
         <Heading w="100%" textAlign={'center'} fontWeight="normal">
@@ -286,10 +314,14 @@ export default function Multistep() {
                 rounded="md"
                 defaultValue={notion_url}
               />
+              <IconButton
+                icon={<CopyIcon />}
+                onClick={handleCopyNotion}
+              />
             </InputGroup>
           </FormControl>
 
-          <FormControl id="email" mt={1}>
+          <FormControl as={GridItem} colSpan={[3, 2]}>
             <FormLabel
               fontSize="sm"
               fontWeight="md"
@@ -304,9 +336,14 @@ export default function Multistep() {
                 type="text"
                 focusBorderColor="brand.400"
                 rounded="md"
-                defaultValue={notion_url}
+                defaultValue={mirror_url}
+              />
+              <IconButton
+                icon={<CopyIcon />}
+                onClick={handleCopyMirror}
               />
             </InputGroup>
+            
             <FormHelperText>
               Paste link according to the platform
             </FormHelperText>
