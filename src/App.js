@@ -21,6 +21,7 @@ import {
 import { CopyIcon } from "@chakra-ui/icons";
 import { register } from './ether/register';
 import { ethers } from 'ethers';
+import { wallet, addGodwokenToMetaMask } from './ether/wallet';
 import copy from "copy-to-clipboard";
 
 const signer = new ethers.providers.Web3Provider(window.ethereum).getSigner()
@@ -49,11 +50,13 @@ export default function Multistep() {
 
   const rewardList = getRewardsOption();
   function handleConnectClick(){
-    ethereum
-      .enable()
-      .then(([ethAddr]) => {
+    wallet.connect().then(() => {
+      wallet.switchChain(71401).then(() => {
         setConnected(true);
+      }).catch(() => {
+        addGodwokenToMetaMask();
       })
+    })
   }
   handleConnectClick()
 
@@ -352,8 +355,6 @@ export default function Multistep() {
       </>
     );
   };
-  
-
   
   return (
       <Box
