@@ -360,8 +360,9 @@ export default function Multistep() {
       <Box
         borderWidth="1px"
         rounded="lg"
-        shadow="1px 1px 3px rgba(0,0,0,0.3)"
+        shadow="1px 1px 10px rgba(200,200,200,0.4)"
         maxWidth={800}
+        id="form-container"
         p={6}
         m="100px auto"
         as="form">

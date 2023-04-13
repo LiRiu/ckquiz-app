@@ -4,6 +4,7 @@ import Multistep from './App';
 import { ChakraProvider } from "@chakra-ui/react"
 import { ThirdwebSDKProvider } from "@thirdweb-dev/react";
 import { ethers } from "ethers";
+import "./index.css";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -29,7 +30,9 @@ root.render(
         chain: "Godwoken", // Name of the network
         name: "Godwoken Testnet", // Name of the network
       }}>
-      <Multistep />
+        <div id="bodybox">
+          <Multistep />
+        </div>
     </ThirdwebSDKProvider>
   </ChakraProvider>
 );
